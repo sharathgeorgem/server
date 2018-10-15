@@ -8,7 +8,10 @@ server.on('connection', (socket) => {
 
   socket.on('data', (data) => {
     console.log('Data from client is ' + data)
-    socket.write('Hello client. You sent me \r\n\r\n')
+    socket.write('Hello client. \r\n\r\n')
+  })
+  socket.on('end', () => {
+    console.log('Connection closed')
   })
 })
 
