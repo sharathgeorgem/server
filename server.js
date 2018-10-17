@@ -10,6 +10,9 @@ server.on('connection', (socket) => {
     console.log('The request object is ' + JSON.stringify(requestParser(data), null, '\t'))
     socket.write('Hello client. \r\n\r\n')
   })
+
+  dataHandler(socket)
+
   socket.on('end', () => {
     console.log('Connection closed')
   })
@@ -22,9 +25,43 @@ server.listen(9000, () => {
   console.log('The server that is I, listens on ' + serverAddress.port)
 })
 
+function dataHandler (socket) {
+  let requestBuffer = Buffer.from([])
+  let bodyBuffer = Buffer.from([])
+  let receivedPart = false
+  let reqObj = {}
+  socket.on('data', (data) => {
+    if (receivedPart) {
+      bodyBuffer = Buffer.concat([bodyBuffer, data], bodyBuffer.length + data.length)
+    }
+    requestBuffer = Buffer.concat([requestBuffer, data], requestBuffer.length + data.length)
+    if (requestBuffer.includes('\r\n\r\n')) {
+      if (!receivedPart) {
+        reqObj = requestParser(requestBuffer)
+        let body = reqObj['body']
+        bodyBuffer = Buffer.from(body)
+        receivedPart = true
+      }
+      if (reqObj.headers['Content-length'] === undefined || parseInt(reqObj.headers['Content-Length']) === bodyBuffer.length) {
+        requestHandler(reqObj, socket, bodyBuffer)
+        requestBuffer = Buffer.from([])
+        bodyBuffer = Buffer.from([])
+        receivedPart = false
+        reqObj = {}
+      }
+    }
+  })
+}
+
+function requestHandler (obj, socket, body) {
+  console.log('The obj is ' + JSON.stringify(obj))
+  console.log('The socket is ' + socket)
+  console.log('The body is ' + body)
+}
+
 function requestParser (requestString) {
   var request = {}
-  var lines = requestString.toString().split(/\r?\n/)
+  var lines = requestString.toString().split(/\r\n/)
   var parsedRequestStringLine = parseRequestString(lines.shift())
   request['method'] = parsedRequestStringLine['method']
   request['uri'] = parsedRequestStringLine['uri']
