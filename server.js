@@ -1,4 +1,8 @@
 var net = require('net')
+var Request = require('./modules/request')
+var Response = require('./modules/response')
+
+var handlers = []
 
 var server = net.createServer()
 
@@ -57,6 +61,15 @@ function requestHandler (obj, socket, body) {
   console.log('The obj is ' + JSON.stringify(obj))
   console.log('The socket is ' + socket)
   console.log('The body is ' + body)
+  let request = createRequestObject(obj, socket)
+}
+
+function createRequestObject (requestObject, socket) {
+  
+}
+
+function addHandler (handler) {
+  handlers.push(handler)
 }
 
 function requestParser (requestString) {
