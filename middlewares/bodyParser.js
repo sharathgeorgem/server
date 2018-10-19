@@ -16,8 +16,8 @@ function typeURLEncoded (req, res, next) {
   if (req.headers['Content-Type'] === 'application/x-www-form-urlencoded') {
     let urlValues = req.body.split('&')
     let urlParsed = {}
-    urlValues.map(function (element) {
-      let keyVal = element.split('=')
+    urlValues.map(function (val) {
+      let keyVal = val.split('=')
       urlParsed[keyVal[0]] = urlParsed[keyVal[1]]
     })
     req.body = urlParsed

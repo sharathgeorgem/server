@@ -2,8 +2,6 @@ var net = require('net')
 var Request = require('./modules/request')
 var Response = require('./modules/response')
 
-var handlers = []
-
 var server = net.createServer()
 
 server.on('connection', (socket) => {
@@ -28,6 +26,13 @@ server.listen(9000, () => {
   var serverAddress = server.address()
   console.log('The server that is I, listens on ' + serverAddress.port)
 })
+
+var routes = {
+  GET: {},
+  POST: {}
+}
+
+var handlers = []
 
 function dataHandler (socket) {
   let requestBuffer = Buffer.from([])
@@ -70,6 +75,11 @@ function createRequestObject (requestObject, socket) {
 
 function addHandler (handler) {
   handlers.push(handler)
+}
+
+function next (req, res) {
+  let handler = req.handlers.shift
+  handler(req, res, next)
 }
 
 function requestParser (requestString) {
