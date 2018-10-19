@@ -78,7 +78,7 @@ function addHandler (handler) {
 }
 
 function next (req, res) {
-  let handler = req.handlers.shift
+  let handler = req.handlers.shift()
   handler(req, res, next)
 }
 
