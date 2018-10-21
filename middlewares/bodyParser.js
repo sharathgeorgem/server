@@ -1,26 +1,34 @@
-function typePlainText (req, res, next) {
-  if (req.headers['Content-Type'] === 'text/plain') {
-    req.body = req.body.toString()
+function typePlainText (request, response, next) {
+  if (request.headers['Content-Type'] === 'text/plain') {
+    request.body = request.body.toString()
   }
-  next(req, res)
+  next(request, response)
 }
 
-function typeJSON (req, res, next) {
-  if (req.headers['Content-Type'] === 'application/json') {
-    req.body = JSON.parse(req.body)
+function typeJSON (request, response, next) {
+  if (request.headers['Content-Type'] === 'application/json') {
+    console.log(typeof request.body)
+    request.body = JSON.stringify(request.body)
+    request.body = JSON.parse(request.body)
   }
-  next(req, res)
+  next(request, response)
 }
 
-function typeURLEncoded (req, res, next) {
-  if (req.headers['Content-Type'] === 'application/x-www-form-urlencoded') {
-    let urlValues = req.body.split('&')
+function typeURLEncoded (request, response, next) {
+  if (request.headers['Content-Type'] === 'application/x-www-form-urlencoded') {
+    let urlValues = request.body.split('&')
     let urlParsed = {}
     urlValues.map(function (val) {
       let keyVal = val.split('=')
       urlParsed[keyVal[0]] = urlParsed[keyVal[1]]
     })
-    req.body = urlParsed
+    request.body = urlParsed
   }
-  next(req, res)
+  next(request, response)
+}
+
+module.exports = {
+  typeJSON,
+  typePlainText,
+  typeURLEncoded
 }

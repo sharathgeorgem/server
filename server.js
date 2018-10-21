@@ -1,85 +1,82 @@
 var net = require('net')
-var Request = require('./modules/request')
 var Response = require('./modules/response')
 
-var server = net.createServer()
-
-server.on('connection', (socket) => {
-  var remoteAddress = socket.remoteAddress + ':' + socket.remotePort
-  console.log('Gentlemen! We have a new client at ' + remoteAddress)
-  socket.on('data', (data) => {
-    console.log('Data from client is ' + data)
-    console.log('The request object is ' + JSON.stringify(requestParser(data), null, '\t'))
-    socket.write('Hello client. \r\n\r\n')
+function create (port) {
+  var server = net.createServer()
+  server.on('connection', (socket) => {
+    var remoteAddress = socket.remoteAddress + ':' + socket.remotePort
+    console.log('Gentlemen! We have a new client at ' + remoteAddress)
+    dataHandler(socket)
   })
-
-  dataHandler(socket)
-
-  socket.on('end', () => {
-    console.log('Connection closed')
+  server.on('error', (err) => {
+    console.log('Oh damn. An error ' + err)
   })
-})
-server.on('error', (err) => {
-  console.log('Oh damn. An error ' + err)
-})
-server.listen(9000, () => {
-  var serverAddress = server.address()
-  console.log('The server that is I, listens on ' + serverAddress.port)
-})
-
-var routes = {
-  GET: {},
-  POST: {}
+  server.listen(port, () => {
+    var serverAddress = server.address()
+    console.log('The server that is I, listens on ' + serverAddress.port)
+  })
 }
 
 var handlers = []
 
 function dataHandler (socket) {
   let requestBuffer = Buffer.from([])
-  let bodyBuffer = Buffer.from([])
-  let receivedPart = false
   let reqObj = {}
   socket.on('data', (data) => {
-    if (receivedPart) {
-      bodyBuffer = Buffer.concat([bodyBuffer, data], bodyBuffer.length + data.length)
-    }
+    // console.log('Data from client is ' + data)
+    // console.log('The request object is ' + JSON.stringify(requestParser(data), null, '\t'))
+    socket.write('Hello client. \r\n\r\n')
     requestBuffer = Buffer.concat([requestBuffer, data], requestBuffer.length + data.length)
     if (requestBuffer.includes('\r\n\r\n')) {
-      if (!receivedPart) {
-        reqObj = requestParser(requestBuffer)
-        let body = reqObj['body']
-        bodyBuffer = Buffer.from(body)
-        receivedPart = true
-      }
-      if (reqObj.headers['Content-length'] === undefined || parseInt(reqObj.headers['Content-Length']) === bodyBuffer.length) {
-        requestHandler(reqObj, socket, bodyBuffer)
+      reqObj = requestParser(requestBuffer)
+      if (reqObj.headers['Content-length'] === undefined || parseInt(reqObj.headers['Content-Length']) === reqObj.body.length) {
+        requestHandler(reqObj, socket)
         requestBuffer = Buffer.from([])
-        bodyBuffer = Buffer.from([])
-        receivedPart = false
         reqObj = {}
       }
     }
   })
+  socket.on('end', () => {
+    console.log('Connection closed')
+  })
 }
 
-function requestHandler (obj, socket, body) {
-  console.log('The obj is ' + JSON.stringify(obj))
-  console.log('The socket is ' + socket)
-  console.log('The body is ' + body)
-  let request = createRequestObject(obj, socket)
+function requestHandler (obj, socket) {
+  addHandler(methodHandler)
+  obj['handlers'] = handlers
+  obj['socket'] = socket
+  let request = obj
+  let response = createResponseObject(request)
+  next(request, response)
 }
 
-function createRequestObject (requestObject, socket) {
-  
+function createResponseObject (newRequestObject) {
+  let response = new Response(newRequestObject)
+  return response
 }
 
 function addHandler (handler) {
   handlers.push(handler)
 }
 
-function next (req, res) {
-  let handler = req.handlers.shift()
-  handler(req, res, next)
+var routes = {
+  GET: {},
+  POST: {}
+}
+
+function addRoute (route, method, callbackFunc) {
+  routes[method][route] = callbackFunc
+}
+
+function next (request, response) {
+  let handler = request.handlers.shift()
+  handler(request, response, next)
+}
+
+var methodHandler = (request, response) => {
+  if (routes[request.method].hasOwnProperty(request.uri)) {
+    routes[request.method][request.uri](request, response)
+  }
 }
 
 function requestParser (requestString) {
@@ -117,4 +114,10 @@ function parseHeaders (headerString) {
     headers[key] = parts.join(':').trim()
   }
   return headers
+}
+
+module.exports = {
+  create,
+  addHandler,
+  addRoute
 }
