@@ -7,7 +7,6 @@ function typePlainText (request, response, next) {
 
 function typeJSON (request, response, next) {
   if (request.headers['Content-Type'] === 'application/json') {
-    console.log(typeof request.body)
     request.body = JSON.stringify(request.body)
     request.body = JSON.parse(request.body)
   }

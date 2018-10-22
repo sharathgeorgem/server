@@ -1,7 +1,10 @@
 var server = require('./server')
 var bodyParser = require('./middlewares/bodyParser')
+var staticFileHandler = require('./middlewares/staticFileHandler')
 
 server.create(9000)
+
+server.addHandler(staticFileHandler.staticFileHandler('./src'))
 
 server.addHandler(bodyParser.typePlainText)
 server.addHandler(bodyParser.typeJSON)
