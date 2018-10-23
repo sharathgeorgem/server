@@ -25,7 +25,7 @@ function dataHandler (socket) {
   socket.on('data', (data) => {
     // console.log('Data from client is ' + data)
     // console.log('The request object is ' + JSON.stringify(requestParser(data), null, '\t'))
-    socket.write('Hello client. \r\n\r\n')
+    // socket.write('Hello client. \r\n\r\n')
     requestBuffer = Buffer.concat([requestBuffer, data], requestBuffer.length + data.length)
     if (requestBuffer.includes('\r\n\r\n')) {
       reqObj = requestParser(requestBuffer)
@@ -42,7 +42,6 @@ function dataHandler (socket) {
 }
 
 function requestHandler (obj, socket) {
-  addHandler(methodHandler)
   obj['handlers'] = handlers
   obj['socket'] = socket
   let request = obj
@@ -51,8 +50,7 @@ function requestHandler (obj, socket) {
 }
 
 function createResponseObject (newRequestObject) {
-  let response = new Response(newRequestObject)
-  return response
+  return new Response(newRequestObject)
 }
 
 function addHandler (handler) {
@@ -69,6 +67,7 @@ function addRoute (route, method, callbackFunc) {
 }
 
 function next (request, response) {
+  addHandler(methodHandler)
   let handler = request.handlers.shift()
   handler(request, response, next)
 }

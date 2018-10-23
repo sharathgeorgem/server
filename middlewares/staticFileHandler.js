@@ -8,8 +8,9 @@ function staticFileHandler (dir) {
       if (err) console.log('ERROR', err)
       response.body = data
       response.setHeaders()
-      // response.setContentType(url)
+      response.setContentType(url)
       response.send()
+      next(request, response)
     })
   }
 }
